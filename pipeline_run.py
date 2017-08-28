@@ -11,7 +11,6 @@ from functools import reduce
 from scipy.signal import find_peaks_cwt
 from moviepy.editor import VideoFileClip
 from utils import histogram_pixels, get_pos
-# from lanes import Lane
 
 class Pipeline(object):
     """Pipeline that processes video."""
