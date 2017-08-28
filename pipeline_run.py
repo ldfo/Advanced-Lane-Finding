@@ -24,7 +24,7 @@ class Pipeline(object):
         print ('cam dist:', self.cam_dist)
         print ('loading:', in_file)
         in_clip = VideoFileClip(in_file)
-        in_clip = in_clip.subclip(15,20)
+        # in_clip = in_clip.subclip(15,20)
         print ('processing:', in_file)
         processed_clip = in_clip.fl_image(self.process_image)
         print ('writing to:', out_file)

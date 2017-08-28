@@ -1,12 +1,12 @@
 ## Writeup Template
 
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+### You can use this file as a template for your write-up if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
 ---
 
 **Advanced Lane Finding Project**
 
-The goals / steps of this project are the following:
+The goals/steps of this project are the following:
 
 * Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
 * Apply a distortion correction to raw images.
@@ -19,13 +19,17 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/undistort_output.png "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[image1]: ./images/cheess.png
+[image2]: ./images/test3.png
+[image3]: ./images/test3_undist.png
+[image4]: ./images/threshold1.png
+[image4.2]: ./images/threshold2.png
+[image5]: ./images/perspective.png
+[image6]: ./images/hist.png
+[image7]: ./images/lane_detect.png
+[image8]: ./images/lane.png
+[image9]: ./images/merged.png
+[video1]: ./project_video_output.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -37,7 +41,7 @@ The goals / steps of this project are the following:
 
 ### Camera Calibration
 
-#### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+#### 1. Briefly, state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
 The code for this step is contained in lines 113 through 134 of the file called `pipeline_run.py`).  
 
@@ -60,11 +64,12 @@ Here I show distorted and undistorted
 #### 2. Thresholding
 I tried several combinations of color and gradient transforms and also after some research and reading I found OpenCV has a method already implemented that can greatly help with this problem. I used the Laplacian function implemented on `cv2.Laplacian`.
 
-First I applied thresholding defined on function `threshold` lines 79 to 111 of `pipeline_run.py` then I applied the laplacian function and more thresholding to highlight only negative values. This was the best performing method I found.
-The laplacian part is defined on function `find_edges` on lines 195 to 217 of `pipeline_run.py`
-Here's an example of my output for this step.
-
+First I applied thresholding defined on function `threshold` lines 79 to 111 of `pipeline_run.py` then I applied the Laplacian function and more thresholding to highlight only negative values. This was the best performing method I found.
+The Laplacian part is defined on function `find_edges` on lines 195 to 217 of `pipeline_run.py`
+Here's an example of my output for this step after the first thresholding and the second one.
+In this case, the two thresholding stages work the same but in other frames, the second stage helped to get a better lane detection.
 ![thresholded][image4]
+![thresholded2][image4.2]
 
 #### 3. Perspective Transform.
 
@@ -85,18 +90,33 @@ I verified that my perspective transform was working as expected by drawing the 
 Then after warping the image with `cv2.warpPerspective` I used the histogram method for detecting the right and left lanes. This is implemented on lines 26 to 122 on file `utils.py`. I spent some time tuning the size of the sliding window and the minpix parameter.
 At the end of this function after recentering the windows if I found more than 15 pixels I used the `np.polyfit` function for fitting a second order polynomial.
 The last step here was to draw the shaded area for the lane.
-![image with poly][image6]
+![histogram][image6]
+![image with poly][image7]
+![shaded area][image8]
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
-I did this on the function `add_figures_to_image` defined in lines 258 to 251 of my code in `pipeline_run.py`
 
-I did this in lines # through # in my code in `my_other_file.py`
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to the center.
+
+I did this on the function `add_figures_to_image` defined in lines 258 to 251 of my code in `pipeline_run.py`.
+First I calculated the curvature of the left and right lanes and averaged it. I also calculated the minimum curvature between the two lanes and the vehicle position.
+Then I converted this values into meters because the calculated curvature and position are on pixel value. I used  this conversion:
+```
+# Convert from pixels to meters
+vehicle_position = vehicle_position / 12800 * 3.7
+curvature = curvature / 128 * 3.7
+    min_curvature = min_curvature / 128 * 3.7
+```
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+After I got the lanes and the drawn area of the detected lane, I warped back the perspective using the `warp_minv` that I saved earlier when I warped the perspective.
+And after warping back the lane image I added it to the original image with: `img = cv2.add(img, thi)`. This is defined from line 58 to 63 of `pipeline_run.py'.
+I used the function `highlight_lane_line_area` defined on line 147 from `utils.py` to draw the area.
 
-![alt text][image6]
+And lastly, I plotted the curvature and center offset information onto the image. I calculated the curvature and the things described on the last point here.
+
+Here is the final image: 
+![alt text][image9]
 
 ---
 
@@ -104,12 +124,14 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_output.mp4)
 
 ---
 
 ### Discussion
 
-#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+The pipeline works reasonably well, certainly much better than the first project and looks cool also. It didn't work that well for the challenge video. I think the major problem on the challenge video was the lack of contrast and false lines. Maybe some histogram equalization or normalizing the image before the pipeline could help with this problem of illumination variations.
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+The most tricky part of the entire project was the sliding window techniques, also there are a lot of parameters to manually tune on all the steps of the image processing pipeline, I wonder if we could use a machine learning algorithm to get the best parameters for each particular video.
+
+I think there are still improvements needed on the thresholding because it's very susceptible to lighting changes, also the pipeline is a little bit slow and it would be better to parallelize the process or use a GPU implementation of OpenCV.enCV.
