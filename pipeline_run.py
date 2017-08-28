@@ -11,6 +11,7 @@ from functools import reduce
 from scipy.signal import find_peaks_cwt
 from moviepy.editor import VideoFileClip
 from utils import histogram_pixels, get_pos
+# from lanes import Lane
 
 class Pipeline(object):
     """Pipeline that processes video."""
@@ -23,7 +24,7 @@ class Pipeline(object):
         print ('cam dist:', self.cam_dist)
         print ('loading:', in_file)
         in_clip = VideoFileClip(in_file)
-        # in_clip = in_clip.subclip(10,15)
+        in_clip = in_clip.subclip(15,20)
         print ('processing:', in_file)
         processed_clip = in_clip.fl_image(self.process_image)
         print ('writing to:', out_file)
@@ -39,9 +40,10 @@ class Pipeline(object):
         width, height = img_size
         # undistort image
         img = cv2.undistort(np.copy(img), self.cam_mtx, self.cam_dist)
-        # thresholded binary image.
+        # thresholded binary image
         thi = self.threshold(img, color=False)
         thi = np.dstack((thi, thi, thi)) * 255
+
         # perspective transform
         src = self.find_perspective_points(thi)
         warp_m, warp_minv = self.transform_perspective(thi, src)
@@ -82,7 +84,6 @@ class Pipeline(object):
 
         # Convert to HLS color space and separate the V channel
         hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
-
 
         ## White Color
         lower_white = np.array([0,210,0], dtype=np.uint8)
@@ -134,8 +135,9 @@ class Pipeline(object):
         return mtx, dist
 
     def find_perspective_points(self, image):
+        # find edges with laplacian and more thresholding
         edges = self.find_edges(image)
-
+        # edges = image[:,:,0]
         # Computing perspective points automatically
         rho = 2              # distance resolution in pixels of the Hough grid
         theta = 1*np.pi/180  # angular resolution in radians of the Hough grid
@@ -197,7 +199,7 @@ class Pipeline(object):
 
         _, gray_binary = cv2.threshold(gray.astype('uint8'), 130, 255, cv2.THRESH_BINARY)
 
-        # switch to gray image for laplacian if 's' doesn't give enough details
+        # when 's' doesn't give eenough details change to laplacian
         total_px = image.shape[0]*image.shape[1]
         laplacian = cv2.Laplacian(gray, cv2.CV_32F, ksize=21)
         mask_one = (laplacian < 0.15*np.min(laplacian)).astype(np.uint8)
@@ -208,7 +210,7 @@ class Pipeline(object):
         _, s_binary = cv2.threshold(s.astype('uint8'), 150, 255, cv2.THRESH_BINARY)
         mask_two = s_binary
 
-
+        # combine
         combined_binary = np.clip(cv2.bitwise_and(gray_binary,
                             cv2.bitwise_or(mask_one, mask_two)), 0, 1).astype('uint8')
 
@@ -256,7 +258,6 @@ class Pipeline(object):
     def add_figures_to_image(self,img, left_fit, right_fit):
         """
         Draws information about the center offset and the current lane curvature onto the given image.
-        :param img:
         """
         # Calculate curvature
         y_eval = 500

@@ -93,9 +93,12 @@ def histogram_pixels(binary_warped):
     # Fit a second order polynomial to each
     if len(lefty) > 0:
         left_fit = np.polyfit(lefty, leftx, 2)
+    else:
+        left_fit = np.array([0, 0, 0])
     if len(righty) > 0:
         right_fit = np.polyfit(righty, rightx, 2)
-
+    else:
+        right_fit = np.array([0,0,0])
     blank_canvas = np.zeros((720, 1280))
     color_canvas = np.zeros_like(binary_warped)
 
