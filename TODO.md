@@ -12,4 +12,3 @@
  * erase unnecessary code on threshold function
  
 Complete from curvature
-https://github.com/thomasantony/CarND-P04-Advanced-Lane-Lines/blob/master/README.md
